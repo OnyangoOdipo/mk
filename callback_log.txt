@@ -1,0 +1,33 @@
+2024-12-07 10:54:29 - Callback received: Array
+(
+    [OrderTrackingId] => 410a2363-a31b-42f7-b85f-dc6dac0bf8a5
+    [OrderMerchantReference] => ORDER-1733565196
+)
+
+2024-12-07 10:54:33 - Status response: Array
+(
+    [payment_method] => Visa
+    [amount] => 1000
+    [created_date] => 2024-12-07T12:54:32.23
+    [confirmation_code] => 7335652670496283604012
+    [order_tracking_id] => 410a2363-a31b-42f7-b85f-dc6dac0bf8a5
+    [payment_status_description] => Completed
+    [description] => Transaction successfully processed.
+    [message] => Request processed successfully
+    [payment_account] => 476173XXXXXX0010
+    [call_back_url] => https://d611-197-232-255-163.ngrok-free.app/mk/callback.php?OrderTrackingId=410a2363-a31b-42f7-b85f-dc6dac0bf8a5&OrderMerchantReference=ORDER-1733565196
+    [status_code] => 1
+    [merchant_reference] => ORDER-1733565196
+    [account_number] => 
+    [payment_status_code] => 
+    [currency] => KES
+    [error] => Array
+        (
+            [error_type] => 
+            [code] => 
+            [message] => 
+        )
+
+    [status] => 200
+)
+
