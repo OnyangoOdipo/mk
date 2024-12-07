@@ -2,7 +2,21 @@
 session_start();
 header('Content-Type: application/json');
 
+require_once 'config/database.php';
+
 try {
+    $database = new Database();
+    $pdo = $database->getConnection();
+
+    if (!$pdo) {
+        throw new Exception('Database connection failed');
+    }
+
+    // Validate request method
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        throw new Exception('Invalid request method');
+    }
+
     // Debug incoming data
     file_put_contents(
         'debug_log.txt',
@@ -85,22 +99,54 @@ try {
         FILE_APPEND
     );
 
-    echo json_encode([
-        'success' => true,
-        'message' => 'Application data saved successfully',
-        'data' => $applicationData
+    // Insert application data
+    $sql = "INSERT INTO invitation_applications (
+        first_name, last_name, email, phone, dob, nationality,
+        address, visit_purpose, destination_country, destination_state,
+        travel_date, duration, travel_info, passport_number,
+        passport_issue_date, passport_expiry_date,
+        passport_copy_path, photo_id_path,
+        created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([
+        $applicationData['firstName'],
+        $applicationData['lastName'],
+        $applicationData['email'],
+        $applicationData['phone'],
+        $applicationData['dob'],
+        $applicationData['nationality'],
+        $applicationData['address'],
+        $applicationData['visitPurpose'],
+        $applicationData['country'],
+        $applicationData['state'],
+        $applicationData['travelDate'],
+        $applicationData['duration'],
+        $applicationData['travelInfo'],
+        $applicationData['passportNumber'],
+        $applicationData['passportIssue'],
+        $applicationData['passportExpiry'],
+        $uploadedFiles['passportCopy'] ?? null,
+        $uploadedFiles['photoId'] ?? null
     ]);
 
+    $application_id = $pdo->lastInsertId();
+    $_SESSION['application_id'] = $application_id;
+
+    echo json_encode([
+        'success' => true,
+        'application_id' => $application_id,
+        'message' => 'Application saved successfully'
+    ]);
+    exit;
+
 } catch (Exception $e) {
-    file_put_contents(
-        'debug_log.txt',
-        date('Y-m-d H:i:s') . " - Error: " . $e->getMessage() . "\n",
-        FILE_APPEND
-    );
-    
-    http_response_code(400);
+    error_log('Save Application Error: ' . $e->getMessage());
+    http_response_code(500);
     echo json_encode([
         'success' => false,
-        'message' => $e->getMessage()
+        'message' => 'An error occurred while saving your application: ' . $e->getMessage()
     ]);
+    exit;
 } 

@@ -1,7 +1,12 @@
 <?php
 require_once 'PesaPalService.php';
+require_once 'config/database.php';
 
 session_start();
+
+// Create database connection
+$database = new Database();
+$pdo = $database->getConnection();
 
 // Log callback details
 $log_file = 'callback_log.txt';
@@ -16,7 +21,7 @@ try {
     }
 
     // Initialize PesaPal service
-    $pesapal = new PesaPalService(true); // true for sandbox, false for production
+    $pesapal = new PesaPalService(true);
     
     // Get transaction status
     $status = $pesapal->getTransactionStatus($orderTrackingId);
@@ -24,26 +29,33 @@ try {
     // Log status response
     file_put_contents($log_file, date('Y-m-d H:i:s') . ' - Status response: ' . print_r($status, true) . "\n", FILE_APPEND);
 
+    // Update application payment status
+    $sql = "UPDATE invitation_applications SET 
+            payment_status = ?,
+            payment_date = NOW()
+            WHERE order_id = ?";
+    
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([
+        $status['payment_status_description'],
+        $orderTrackingId
+    ]);
+
     // Process based on status
     switch ($status['payment_status_description']) {
         case 'COMPLETED':
-            // Payment successful
-            // Update your database and redirect to success page
-            header('Location: success.php?reference=' . $merchantReference);
+            header('Location: application.php?status=payment_success');
             break;
             
         case 'FAILED':
-            // Payment failed
-            header('Location: failed.php?reference=' . $merchantReference);
+            header('Location: application.php?status=payment_failed');
             break;
             
         default:
-            // Payment pending or other status
-            header('Location: pending.php?reference=' . $merchantReference);
+            header('Location: application.php?status=payment_pending');
             break;
     }
 } catch (Exception $e) {
-    // Log error and redirect to error page
     file_put_contents($log_file, date('Y-m-d H:i:s') . ' - Error: ' . $e->getMessage() . "\n", FILE_APPEND);
-    header('Location: failed.php?error=' . urlencode($e->getMessage()));
+    header('Location: application.php?status=error&message=' . urlencode($e->getMessage()));
 }

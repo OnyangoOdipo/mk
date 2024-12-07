@@ -1,4 +1,4 @@
-<form id="applicationForm" action="process_payment.php" method="POST" enctype="multipart/form-data" class="space-y-6">
+<form id="applicationForm" method="POST" enctype="multipart/form-data" class="space-y-6">
     <!-- Step 1: Personal Information -->
     <?php include 'form-steps/personal-info.php'; ?>
 
@@ -22,6 +22,11 @@
                 class="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold
                        hover:bg-blue-700 transition-all duration-300">
             Next
+        </button>
+        <button type="submit" id="submitBtn" 
+                class="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold
+                       hover:bg-blue-700 transition-all duration-300" style="display: none;">
+            Proceed to Payment
         </button>
     </div>
 </form>

@@ -23,6 +23,7 @@ document.addEventListener('DOMContentLoaded', function() {
             prevBtn.style.display = 'block';
             if (currentStep === 4) {
                 nextBtn.style.display = 'none';
+                submitBtn.style.display = 'block'; // Show submit button on last step
             }
             
             // Update progress bar
@@ -41,6 +42,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Update buttons
             nextBtn.style.display = 'block';
+            submitBtn.style.display = 'none'; // Hide submit button when going back
             if (currentStep === 1) {
                 prevBtn.style.display = 'none';
             }
@@ -127,81 +129,42 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Form submission
-    form.addEventListener('submit', async (e) => {
+    form.addEventListener('submit', async function(e) {
         e.preventDefault();
-        
-        // Validate terms checkbox
-        const termsCheckbox = document.getElementById('terms');
-        if (!termsCheckbox.checked) {
-            alert('Please accept the terms and conditions');
-            return false;
-        }
-
-        // Disable submit button and show loading state
-        const submitBtn = document.getElementById('submitBtn');
-        if (!submitBtn) return;
-        
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<span class="spinner"></span> Processing...';
 
         try {
-            // First save the application data
-            const formData = new FormData(form);
-            const saveResponse = await fetch('save_application.php', {
+            const formData = new FormData(this);
+            
+            // Save application data
+            const response = await fetch('save_application.php', {
                 method: 'POST',
                 body: formData
             });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
             
-            const saveResult = await saveResponse.json();
-            console.log('Save Result:', saveResult);
-            
-            if (saveResult.success) {
-                // If save is successful, redirect to process_payment.php
+            if (result.success) {
+                // Store application ID in session
+                sessionStorage.setItem('application_id', result.application_id);
+                
+                // Redirect to payment page
                 window.location.href = 'process_payment.php';
             } else {
-                throw new Error(saveResult.message || 'Failed to save application');
+                throw new Error(result.message || 'Failed to save application');
             }
         } catch (error) {
             console.error('Error:', error);
-            alert('An error occurred. Please try again.');
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = 'Proceed to Payment';
-        }
-    });
-
-    if (submitBtn) {
-        submitBtn.addEventListener('click', async () => {
-            // Validate terms checkbox
-            const termsCheckbox = document.getElementById('terms');
-            if (!termsCheckbox.checked) {
-                alert('Please accept the terms and conditions');
-                return false;
-            }
-
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<span class="spinner"></span> Processing...';
-
-            try {
-                const formData = new FormData(form);
-                const saveResponse = await fetch('save_application.php', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                const saveResult = await saveResponse.json();
-                console.log('Save Result:', saveResult);
-                
-                if (saveResult.success) {
-                    window.location.href = 'process_payment.php';
-                } else {
-                    throw new Error(saveResult.message || 'Failed to save application');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('An error occurred. Please try again.');
+            alert('An error occurred while saving your application. Please try again.');
+            
+            const submitBtn = document.getElementById('submitBtn');
+            if (submitBtn) {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = 'Proceed to Payment';
             }
-        });
-    }
+        }
+    });
 }); 

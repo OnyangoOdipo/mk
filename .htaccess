@@ -1,0 +1,11 @@
+RewriteEngine On
+RewriteBase /mk/
+
+# Handle PHP files
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.+)\.php$ $1.php [L,QSA]
+
+# Set default error documents
+ErrorDocument 404 /mk/404.php
+ErrorDocument 503 /mk/503.php 

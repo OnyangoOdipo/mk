@@ -1,166 +1,147 @@
 <?php
-// Ensure session is started
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
-// You might want to get some data from your session or database
-$application_id = $_SESSION['application_id'] ?? null;
-$amount = $_SESSION['payment_amount'] ?? 1000; // Default or calculated amount
+require_once __DIR__ . '/../../config/database.php';
+
+// Create database connection
+$database = new Database();
+$pdo = $database->getConnection();
+
+// Get application data from session
+$applicationData = $_SESSION['application_data'] ?? [];
+
+// Debug log
+error_log('Application Data: ' . print_r($applicationData, true));
 ?>
 
-<div class="payment-form-container">
-    <h2>Payment Details</h2>
-    
-    <form action="../../process_payment.php" method="POST" id="paymentForm" class="needs-validation" novalidate>
-        <div class="row">
-            <div class="col-md-6 mb-3">
-                <label for="first_name" class="form-label">First Name</label>
-                <input type="text" class="form-control" id="first_name" name="first_name" required>
-                <div class="invalid-feedback">
-                    Please provide your first name.
-                </div>
-            </div>
-            
-            <div class="col-md-6 mb-3">
-                <label for="last_name" class="form-label">Last Name</label>
-                <input type="text" class="form-control" id="last_name" name="last_name" required>
-                <div class="invalid-feedback">
-                    Please provide your last name.
-                </div>
-            </div>
+<div class="form-step" data-step="4">
+    <div class="max-w-4xl mx-auto space-y-8">
+        <!-- Header -->
+        <div class="text-center mb-10">
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Review Your Application</h2>
+            <p class="text-gray-600">Please review your information before proceeding to payment</p>
         </div>
 
-        <div class="row">
-            <div class="col-md-6 mb-3">
-                <label for="email" class="form-label">Email Address</label>
-                <input type="email" class="form-control" id="email" name="email" required>
-                <div class="invalid-feedback">
-                    Please provide a valid email address.
-                </div>
-            </div>
-            
-            <div class="col-md-6 mb-3">
-                <label for="phone" class="form-label">Phone Number</label>
-                <input type="tel" class="form-control" id="phone" name="phone" 
-                       pattern="^(?:254|\+254|0)?(7[0-9]{8})$" required>
-                <div class="invalid-feedback">
-                    Please provide a valid phone number.
-                </div>
-                <small class="form-text text-muted">Format: 254XXXXXXXXX or 07XXXXXXXX</small>
-            </div>
-        </div>
+        <!-- Personal Information Section -->
+        <!-- ... (keep your existing personal info display section) ... -->
 
-        <div class="row">
-            <div class="col-md-6 mb-3">
-                <label for="amount" class="form-label">Amount (KES)</label>
-                <input type="number" class="form-control" id="amount" name="amount" 
-                       value="<?php echo htmlspecialchars($amount); ?>" readonly>
-            </div>
-            
-            <div class="col-md-6 mb-3">
-                <label for="description" class="form-label">Payment Description</label>
-                <input type="text" class="form-control" id="description" name="description" 
-                       value="Application Payment #<?php echo htmlspecialchars($application_id ?? 'New'); ?>" readonly>
-            </div>
-        </div>
+        <!-- Travel Details Section -->
+        <!-- ... (keep your existing travel details display section) ... -->
 
-        <!-- Hidden fields -->
-        <input type="hidden" name="currency" value="KES">
-        
-        <div class="payment-summary mb-4">
-            <h4>Payment Summary</h4>
-            <div class="card">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between mb-2">
-                        <span>Application Fee:</span>
-                        <span>KES <?php echo number_format($amount, 2); ?></span>
-                    </div>
-                    <div class="d-flex justify-content-between">
-                        <strong>Total Amount:</strong>
-                        <strong>KES <?php echo number_format($amount, 2); ?></strong>
-                    </div>
+        <!-- Payment Summary Section -->
+        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <div class="flex items-center mb-4">
+                <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                    <i class="fas fa-credit-card text-green-600"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-800">Payment Summary</h3>
+            </div>
+            <div class="mt-4 space-y-4">
+                <div class="flex justify-between py-3 border-b border-gray-100">
+                    <span class="text-gray-600">Application Processing Fee</span>
+                    <span class="font-medium text-gray-800">KES 7,700.00</span>
+                </div>
+                <div class="flex justify-between py-3">
+                    <span class="text-lg font-semibold text-gray-800">Total Amount</span>
+                    <span class="text-lg font-bold text-blue-600">KES 7,700.00</span>
                 </div>
             </div>
         </div>
 
-        <div class="form-check mb-4">
-            <input class="form-check-input" type="checkbox" id="terms" required>
-            <label class="form-check-label" for="terms">
-                I agree to the terms and conditions and confirm that the information provided is correct
-            </label>
-            <div class="invalid-feedback">
-                You must agree before proceeding.
+        <!-- Payment Form -->
+        <form action="process_payment.php" method="POST" id="paymentForm" class="space-y-6">
+            <!-- Terms Checkbox -->
+            <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 mb-6">
+                <label class="flex items-center space-x-3 cursor-pointer">
+                    <input type="checkbox" 
+                           id="terms" 
+                           name="terms" 
+                           class="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                           required>
+                    <span class="text-gray-700">
+                        I confirm that all the information provided is correct
+                    </span>
+                </label>
             </div>
-        </div>
 
-        <div class="d-grid gap-2">
-            <button class="btn btn-primary btn-lg" type="submit">Proceed to Payment</button>
-        </div>
-    </form>
+            <!-- Hidden fields -->
+            <input type="hidden" name="email" value="<?php echo htmlspecialchars($applicationData['email'] ?? ''); ?>">
+            <input type="hidden" name="phone" value="<?php echo htmlspecialchars($applicationData['phone'] ?? ''); ?>">
+            <input type="hidden" name="first_name" value="<?php echo htmlspecialchars($applicationData['firstName'] ?? ''); ?>">
+            <input type="hidden" name="last_name" value="<?php echo htmlspecialchars($applicationData['lastName'] ?? ''); ?>">
+
+            <!-- Navigation Buttons -->
+            <div class="flex justify-between items-center">
+                <button type="button" 
+                        onclick="previousStep()"
+                        class="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-semibold
+                               hover:bg-gray-200 transition-all duration-300 flex items-center">
+                    <i class="fas fa-arrow-left mr-2"></i> Previous
+                </button>
+                <button type="submit" 
+                        id="submitBtn"
+                        class="px-8 py-3 bg-blue-600 text-white rounded-lg font-semibold
+                               hover:bg-blue-700 transition-all duration-300 flex items-center">
+                    Proceed to Payment <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 
 <script>
-// Form validation script
-(function () {
-    'use strict'
+document.addEventListener('DOMContentLoaded', function() {
+    const paymentForm = document.getElementById('paymentForm');
+    if (!paymentForm) return; // Exit if form not found
 
-    // Fetch all forms that need validation
-    var forms = document.querySelectorAll('.needs-validation')
+    paymentForm.addEventListener('submit', function(e) {
+        e.preventDefault();
 
-    // Loop over them and prevent submission
-    Array.prototype.slice.call(forms)
-        .forEach(function (form) {
-            form.addEventListener('submit', function (event) {
-                if (!form.checkValidity()) {
-                    event.preventDefault()
-                    event.stopPropagation()
-                }
+        // Check terms
+        const termsCheckbox = document.getElementById('terms');
+        if (!termsCheckbox || !termsCheckbox.checked) {
+            alert('Please accept the terms and conditions to proceed');
+            return;
+        }
 
-                form.classList.add('was-validated')
-            }, false)
-        })
-})()
+        // Show loading state
+        const submitBtn = document.getElementById('submitBtn');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner"></span> Processing...';
+        }
 
-// Phone number formatter
-document.getElementById('phone').addEventListener('input', function(e) {
-    let number = e.target.value.replace(/\D/g, '');
-    
-    // Format for Kenya numbers
-    if (number.startsWith('0')) {
-        number = '254' + number.slice(1);
-    } else if (number.startsWith('7')) {
-        number = '254' + number;
-    }
-    
-    e.target.value = number;
+        // Submit the form
+        this.submit();
+    });
 });
 </script>
 
 <style>
-.payment-form-container {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 20px;
+.spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255,255,255,.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s ease-in-out infinite;
+    margin-right: 8px;
 }
 
-.payment-summary {
-    margin-top: 30px;
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }
 
-.card {
-    border-radius: 10px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+/* Make sure the button is always clickable */
+#submitBtn:not(:disabled) {
+    cursor: pointer;
 }
 
-.btn-primary {
-    padding: 12px 24px;
-    font-weight: 600;
-}
-
-.form-label {
-    font-weight: 500;
-}
-
-.invalid-feedback {
-    font-size: 0.875rem;
+#submitBtn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
 }
 </style> 
